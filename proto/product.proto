@@ -1,0 +1,66 @@
+syntax = "proto3";
+package aries;
+
+service ProductService {
+    rpc PostProduct (PostProductRequest) returns (PostProductResponse);
+    rpc ListProduct (ListProductRequest) returns (ListProductResponse);
+    rpc ReadProduct (ReadProductRequest) returns (ReadProductResponse);
+    rpc UpdateProduct (UpdateProductRequest) returns (UpdateProductResponse);
+    rpc DeleteProduct (DeleteProductRequest) returns (DeleteProductResponse);
+}
+
+// Product
+message Product {
+    string id        = 1;
+    string name      = 2;
+    int64  price     = 3;
+    int64  createdAt = 4;
+
+    // TODO
+    //   本当は`optional int64`として定義できるが
+    //   proto3のoptionalは実験的なものなのでtonicが対応してないためoneofを使用する
+    oneof updatedAtOneof {
+        int64  updatedAt = 5;
+    }
+}
+
+// Request Messages
+message PostProductRequest {
+    string name  = 1;
+    int64  price = 2;
+}
+
+message ListProductRequest {}
+
+message ReadProductRequest {
+    string id = 1;
+}
+
+message UpdateProductRequest {
+    string id    = 1;
+    string name  = 2;
+    int64  price = 3;
+}
+
+message DeleteProductRequest {
+    string id = 1;
+}
+
+// Response Messages
+message PostProductResponse {
+    Product product = 1;
+}
+
+message ListProductResponse {
+    repeated Product products = 1;
+}
+
+message ReadProductResponse {
+    Product product = 1;
+}
+
+message UpdateProductResponse {
+    Product product = 1;
+}
+
+message DeleteProductResponse {}

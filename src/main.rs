@@ -1,16 +1,34 @@
-use actix_web::{web, App, HttpServer, Responder, HttpResponse};
+#[macro_use]
+extern crate diesel;
 
-async fn index() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
+mod domains;
+mod infrastructures;
+mod interfaces;
+mod schema;
+mod use_cases;
+// .protoファイルを.rsで表現したものを読み込んでおく
+pub mod aries {
+    tonic::include_proto!("aries");
 }
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new()
-            .route("/", web::get().to(index))
-    })
-    .bind("127.0.0.1:8080")?
-    .run()
-    .await
+use std::env;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // 環境変数の読み込み
+    let listen_address = env::var("LISTEN_ADDRESS").expect("LISTEN_ADDRESS must be set");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    // Databaseのコネクションプールを持ったstruct作る
+    let database = infrastructures::database::Database::new(&database_url, 5);
+
+    // injectorみたいの作ってもよいかも
+    let context = interfaces::controllers::Context { database };
+
+    // ルーティング(増えたら切り出してもよいかも)
+    infrastructures::tonic_server::get_server()
+        .add_service(interfaces::controllers::ProductController::new(context))
+        .serve(listen_address.parse().unwrap())
+        .await?;
+    Ok(())
 }

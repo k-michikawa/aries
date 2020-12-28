@@ -1,0 +1,1 @@
+CREATE ROLE aries LOGIN PASSWORD 'aries';
