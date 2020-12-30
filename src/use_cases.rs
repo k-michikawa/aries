@@ -1,1 +1,1 @@
-pub mod product_repository_use_case;
+pub mod product_use_case;

@@ -4,7 +4,7 @@ package aries;
 service ProductService {
     rpc PostProduct (PostProductRequest) returns (PostProductResponse);
     rpc ListProduct (ListProductRequest) returns (ListProductResponse);
-    rpc ReadProduct (ReadProductRequest) returns (ReadProductResponse);
+    rpc FindProduct (FindProductRequest) returns (FindProductResponse);
     rpc UpdateProduct (UpdateProductRequest) returns (UpdateProductResponse);
     rpc DeleteProduct (DeleteProductRequest) returns (DeleteProductResponse);
 }
@@ -32,7 +32,7 @@ message PostProductRequest {
 
 message ListProductRequest {}
 
-message ReadProductRequest {
+message FindProductRequest {
     string id = 1;
 }
 
@@ -55,7 +55,7 @@ message ListProductResponse {
     repeated Product products = 1;
 }
 
-message ReadProductResponse {
+message FindProductResponse {
     Product product = 1;
 }
 

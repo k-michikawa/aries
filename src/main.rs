@@ -3,6 +3,7 @@ extern crate diesel;
 
 mod domains;
 mod infrastructures;
+mod injectors;
 mod interfaces;
 mod schema;
 mod use_cases;
@@ -12,6 +13,7 @@ pub mod aries {
 }
 
 use std::env;
+use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -22,12 +24,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Databaseのコネクションプールを持ったstruct作る
     let database = infrastructures::database::Database::new(&database_url, 5);
 
-    // injectorみたいの作ってもよいかも
-    let context = interfaces::controllers::Context { database };
+    let service = injectors::product_injector::inject_product_service(Arc::new(database));
 
     // ルーティング(増えたら切り出してもよいかも)
-    infrastructures::tonic_server::get_server()
-        .add_service(interfaces::controllers::ProductController::new(context))
+    infrastructures::grpc::get_server()
+        .add_service(service)
         .serve(listen_address.parse().unwrap())
         .await?;
     Ok(())

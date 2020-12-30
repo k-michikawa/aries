@@ -3,15 +3,17 @@ use tonic::{Code, Request, Response, Status};
 // tonicが.protoを元に自動生成するやつに抽象や型が全て入っているのでそれを持ってくる
 use crate::aries;
 use crate::aries::*;
-use crate::interfaces::controllers::Context;
-use crate::use_cases::product_repository_use_case::*;
+use crate::use_cases::product_use_case::*;
 
-pub struct ProductController {
-    context: Context,
+pub trait ProductServiceModule: product_service_server::ProductService {}
+
+pub struct ProductService {
+    pub use_case: Box<ProductUseCase>,
 }
 
+// 本当は Module for Service としたいが、supertraitとsubtraitは別物なので・・・
 #[tonic::async_trait]
-impl product_service_server::ProductService for ProductController {
+impl product_service_server::ProductService for ProductService {
     async fn post_product(
         &self,
         request: Request<PostProductRequest>,
@@ -19,12 +21,12 @@ impl product_service_server::ProductService for ProductController {
         println!("{:?}", request);
 
         let into_request = request.into_inner();
-        match ProductUseCase::store(&self.context, &into_request.name, into_request.price) {
+        match &self.use_case.store(&into_request.name, into_request.price) {
             Ok(product) => {
                 let message = PostProductResponse {
                     product: Some(Product {
                         id: product.id.to_string(),
-                        name: product.name,
+                        name: product.name.to_owned(),
                         price: product.price,
                         created_at: product.created_at.timestamp(),
                         updated_at_oneof: None,
@@ -42,14 +44,14 @@ impl product_service_server::ProductService for ProductController {
     ) -> Result<Response<ListProductResponse>, Status> {
         println!("{:?}", request);
 
-        match ProductUseCase::scan(&self.context) {
+        match &self.use_case.scan() {
             Ok(products) => {
                 let message = ListProductResponse {
                     products: products
                         .iter()
                         .map(|product| Product {
                             id: product.id.to_string(),
-                            name: product.name.clone(),
+                            name: product.name.to_owned(),
                             price: product.price,
                             created_at: product.created_at.timestamp(),
                             updated_at_oneof: product.updated_at.map(|updated_at| {
@@ -64,10 +66,10 @@ impl product_service_server::ProductService for ProductController {
         }
     }
 
-    async fn read_product(
+    async fn find_product(
         &self,
-        request: Request<ReadProductRequest>,
-    ) -> Result<Response<ReadProductResponse>, Status> {
+        request: Request<FindProductRequest>,
+    ) -> Result<Response<FindProductResponse>, Status> {
         println!("{:?}", request);
 
         let into_request = request.into_inner();
@@ -76,12 +78,12 @@ impl product_service_server::ProductService for ProductController {
             Err(e) => return Err(Status::new(Code::Unknown, format!("{}", e))),
         };
 
-        match ProductUseCase::find_by_id(&self.context, &uuid) {
+        match &self.use_case.find_by_id(&uuid) {
             Ok(product) => {
-                let message = ReadProductResponse {
+                let message = FindProductResponse {
                     product: Some(Product {
                         id: product.id.to_string(),
-                        name: product.name.clone(),
+                        name: product.name.to_owned(),
                         price: product.price,
                         created_at: product.created_at.timestamp(),
                         updated_at_oneof: product.updated_at.map(|updated_at| {
@@ -107,12 +109,15 @@ impl product_service_server::ProductService for ProductController {
             Err(e) => return Err(Status::new(Code::Unknown, format!("{}", e))),
         };
 
-        match ProductUseCase::update(&self.context, &uuid, &into_request.name, into_request.price) {
+        match &self
+            .use_case
+            .update(&uuid, &into_request.name, into_request.price)
+        {
             Ok(product) => {
                 let message = UpdateProductResponse {
                     product: Some(Product {
                         id: product.id.to_string(),
-                        name: product.name.clone(),
+                        name: product.name.to_owned(),
                         price: product.price,
                         created_at: product.created_at.timestamp(),
                         updated_at_oneof: product.updated_at.map(|updated_at| {
@@ -138,18 +143,12 @@ impl product_service_server::ProductService for ProductController {
             Err(e) => return Err(Status::new(Code::Unknown, format!("{}", e))),
         };
 
-        match ProductUseCase::delete(&self.context, &uuid) {
+        match &self.use_case.delete(&uuid) {
             Ok(_) => {
                 let message = DeleteProductResponse {};
                 Ok(Response::new(message))
             }
             Err(e) => Err(Status::new(Code::Unknown, format!("{}", e))),
         }
-    }
-}
-
-impl ProductController {
-    pub fn new(context: Context) -> product_service_server::ProductServiceServer<Self> {
-        product_service_server::ProductServiceServer::new(ProductController { context })
     }
 }

@@ -1,6 +1,11 @@
 use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
+use std::io::{Error, ErrorKind};
 use std::result::Result;
+
+pub trait DatabaseModule: Sync + Send {
+    fn get_connection(&self) -> Result<PooledConnection<ConnectionManager<PgConnection>>, Error>;
+}
 
 pub struct Database {
     pool: Pool<ConnectionManager<PgConnection>>,
@@ -16,13 +21,11 @@ impl Database {
             .expect("Failed to create pool");
         Database { pool }
     }
+}
 
+impl DatabaseModule for Database {
     // FIXME きっと独自エラー作ったほうが良いんだろうなぁ・・・
-    pub fn get_connection(
-        &self,
-    ) -> Result<PooledConnection<ConnectionManager<PgConnection>>, std::io::Error> {
-        self.pool
-            .get()
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+    fn get_connection(&self) -> Result<PooledConnection<ConnectionManager<PgConnection>>, Error> {
+        self.pool.get().map_err(|e| Error::new(ErrorKind::Other, e))
     }
 }

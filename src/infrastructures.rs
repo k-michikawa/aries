@@ -1,2 +1,3 @@
 pub mod database;
-pub mod tonic_server;
+pub mod grpc;
+pub mod repositories;
