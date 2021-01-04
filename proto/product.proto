@@ -1,0 +1,75 @@
+syntax = "proto3";
+package leo;
+
+service ProductService {
+    rpc PostProduct (PostProductRequest) returns (PostProductResponse);
+    rpc ListProduct (ListProductRequest) returns (ListProductResponse);
+    rpc ListProductBySellerId (ListProductBySellerIdRequest) returns (ListProductBySellerIdResponse);
+    rpc FindProduct (FindProductRequest) returns (FindProductResponse);
+    rpc UpdateProduct (UpdateProductRequest) returns (UpdateProductResponse);
+    rpc DeleteProduct (DeleteProductRequest) returns (DeleteProductResponse);
+}
+
+// Product
+message Product {
+    string id        = 1;
+    string name      = 2;
+    int64  price     = 3;
+    string sellerId  = 4;
+    int64  createdAt = 5;
+
+    // TODO 本当は`optional int64`として定義できるがRustのtonicが対応してないためoneofを使用する
+    oneof updatedAtOneof {
+        int64  updatedAt = 6;
+    }
+}
+
+// Request Messages
+message PostProductRequest {
+    string name  = 1;
+    int64  price = 2;
+    string sellerId = 3;
+}
+
+message ListProductRequest {}
+
+message ListProductBySellerIdRequest {
+    string sellerId = 1;
+}
+
+message FindProductRequest {
+    string id = 1;
+}
+
+message UpdateProductRequest {
+    string id    = 1;
+    string name  = 2;
+    int64  price = 3;
+}
+
+message DeleteProductRequest {
+    string id = 1;
+}
+
+// Response Messages
+message PostProductResponse {
+    Product product = 1;
+}
+
+message ListProductResponse {
+    repeated Product products = 1;
+}
+
+message ListProductBySellerIdResponse {
+    repeated Product products = 1;
+}
+
+message FindProductResponse {
+    Product product = 1;
+}
+
+message UpdateProductResponse {
+    Product product = 1;
+}
+
+message DeleteProductResponse {}

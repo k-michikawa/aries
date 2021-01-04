@@ -34,6 +34,12 @@ migration の注意点
 - 接続先の設定が必要
 - 環境変数 or .env ファイルを作って`DATABASE_URL=postgres://postgres:password@localhost:5432/aries-db`を設定しておく
 
+migration ファイルの生成
+
+```sh
+$ diesel migration generate /* filename */
+```
+
 protodep のインストール
 
 ```sh
