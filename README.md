@@ -18,7 +18,7 @@ $ grpcurl -plaintext \
           -proto product.proto \
           -d '{"name": "aries", "price": 100, "seller_id": "940f5b36-621a-48ea-af39-55647befafbc"}'
           localhost:9000 \
-          aries.ProductService/PostProduct
+          leo.ProductService/PostProduct
 ```
 
 ### tools
