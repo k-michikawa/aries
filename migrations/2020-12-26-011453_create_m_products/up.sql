@@ -2,6 +2,7 @@ CREATE TABLE public.m_products (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   name text NOT NULL,
   price bigint NOT NULL,
+  seller_id uuid NOT NULL,
   created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp,
   is_deleted boolean NOT NULL DEFAULT 'f',

@@ -1,8 +1,8 @@
 use tonic::{Code, Request, Response, Status};
 
 // tonicが.protoを元に自動生成するやつに抽象や型が全て入っているのでそれを持ってくる
-use crate::aries;
-use crate::aries::*;
+use crate::leo;
+use crate::leo::*;
 use crate::use_cases::product_use_case::*;
 
 pub trait ProductServiceModule: product_service_server::ProductService {}
@@ -21,13 +21,21 @@ impl product_service_server::ProductService for ProductService {
         println!("{:?}", request);
 
         let into_request = request.into_inner();
-        match &self.use_case.store(&into_request.name, into_request.price) {
+        let seller_id = match uuid::Uuid::parse_str(&into_request.seller_id) {
+            Ok(v) => v,
+            Err(e) => return Err(Status::new(Code::Unknown, format!("{}", e))),
+        };
+        match &self
+            .use_case
+            .store(&into_request.name, into_request.price, &seller_id)
+        {
             Ok(product) => {
                 let message = PostProductResponse {
                     product: Some(Product {
                         id: product.id.to_string(),
                         name: product.name.to_owned(),
                         price: product.price,
+                        seller_id: product.seller_id.to_string(),
                         created_at: product.created_at.timestamp(),
                         updated_at_oneof: None,
                     }),
@@ -44,7 +52,7 @@ impl product_service_server::ProductService for ProductService {
     ) -> Result<Response<ListProductResponse>, Status> {
         println!("{:?}", request);
 
-        match &self.use_case.scan() {
+        match &self.use_case.list() {
             Ok(products) => {
                 let message = ListProductResponse {
                     products: products
@@ -53,9 +61,44 @@ impl product_service_server::ProductService for ProductService {
                             id: product.id.to_string(),
                             name: product.name.to_owned(),
                             price: product.price,
+                            seller_id: product.seller_id.to_string(),
                             created_at: product.created_at.timestamp(),
                             updated_at_oneof: product.updated_at.map(|updated_at| {
-                                aries::product::UpdatedAtOneof::UpdatedAt(updated_at.timestamp())
+                                leo::product::UpdatedAtOneof::UpdatedAt(updated_at.timestamp())
+                            }),
+                        })
+                        .collect::<Vec<Product>>(),
+                };
+                Ok(Response::new(message))
+            }
+            Err(e) => Err(Status::new(Code::Unknown, format!("{}", e))),
+        }
+    }
+
+    async fn list_product_by_seller_id(
+        &self,
+        request: Request<ListProductBySellerIdRequest>,
+    ) -> Result<Response<ListProductBySellerIdResponse>, Status> {
+        println!("{:?}", request);
+
+        let into_request = request.into_inner();
+        let seller_id = match uuid::Uuid::parse_str(&into_request.seller_id) {
+            Ok(v) => v,
+            Err(e) => return Err(Status::new(Code::Unknown, format!("{}", e))),
+        };
+        match &self.use_case.list_by_seller_id(&seller_id) {
+            Ok(products) => {
+                let message = ListProductBySellerIdResponse {
+                    products: products
+                        .iter()
+                        .map(|product| Product {
+                            id: product.id.to_string(),
+                            name: product.name.to_owned(),
+                            price: product.price,
+                            seller_id: product.seller_id.to_string(),
+                            created_at: product.created_at.timestamp(),
+                            updated_at_oneof: product.updated_at.map(|updated_at| {
+                                leo::product::UpdatedAtOneof::UpdatedAt(updated_at.timestamp())
                             }),
                         })
                         .collect::<Vec<Product>>(),
@@ -78,16 +121,17 @@ impl product_service_server::ProductService for ProductService {
             Err(e) => return Err(Status::new(Code::Unknown, format!("{}", e))),
         };
 
-        match &self.use_case.find_by_id(&uuid) {
+        match &self.use_case.find(&uuid) {
             Ok(product) => {
                 let message = FindProductResponse {
                     product: Some(Product {
                         id: product.id.to_string(),
                         name: product.name.to_owned(),
                         price: product.price,
+                        seller_id: product.seller_id.to_string(),
                         created_at: product.created_at.timestamp(),
                         updated_at_oneof: product.updated_at.map(|updated_at| {
-                            aries::product::UpdatedAtOneof::UpdatedAt(updated_at.timestamp())
+                            leo::product::UpdatedAtOneof::UpdatedAt(updated_at.timestamp())
                         }),
                     }),
                 };
@@ -119,9 +163,10 @@ impl product_service_server::ProductService for ProductService {
                         id: product.id.to_string(),
                         name: product.name.to_owned(),
                         price: product.price,
+                        seller_id: product.seller_id.to_string(),
                         created_at: product.created_at.timestamp(),
                         updated_at_oneof: product.updated_at.map(|updated_at| {
-                            aries::product::UpdatedAtOneof::UpdatedAt(updated_at.timestamp())
+                            leo::product::UpdatedAtOneof::UpdatedAt(updated_at.timestamp())
                         }),
                     }),
                 };

@@ -14,11 +14,17 @@ pub struct ProductRepository {
 
 // 砲塔は Module for Repository としたいがsupertraitとsubtraitは別なので・・・
 impl repositories::ProductRepository for ProductRepository {
-    fn store(&self, product_name: &str, product_price: i64) -> Result<models::Product, Error> {
+    fn store(
+        &self,
+        name: &str,
+        price: i64,
+        seller_id: &uuid::Uuid,
+    ) -> Result<models::Product, Error> {
         let connection = &self.database.get_connection()?;
         let new_product = models::NewProduct {
-            name: product_name,
-            price: product_price,
+            name,
+            price,
+            seller_id,
         };
 
         connection
@@ -29,7 +35,7 @@ impl repositories::ProductRepository for ProductRepository {
             })
             .map_err(|e| Error::new(ErrorKind::Other, e))
     }
-    fn scan(&self) -> Result<Vec<models::Product>, Error> {
+    fn list(&self) -> Result<Vec<models::Product>, Error> {
         let connection = &self.database.get_connection()?;
 
         dsl::m_products
@@ -37,7 +43,16 @@ impl repositories::ProductRepository for ProductRepository {
             .load::<models::Product>(connection)
             .map_err(|e| Error::new(ErrorKind::Other, e))
     }
-    fn find_by_id(&self, key: &uuid::Uuid) -> Result<models::Product, Error> {
+    fn list_by_seller_id(&self, seller_id: &uuid::Uuid) -> Result<Vec<models::Product>, Error> {
+        let connection = &self.database.get_connection()?;
+
+        dsl::m_products
+            .filter(m_products::is_deleted.eq(false))
+            .filter(m_products::seller_id.eq(seller_id))
+            .load::<models::Product>(connection)
+            .map_err(|e| Error::new(ErrorKind::Other, e))
+    }
+    fn find(&self, key: &uuid::Uuid) -> Result<models::Product, Error> {
         let connection = &self.database.get_connection()?;
 
         dsl::m_products

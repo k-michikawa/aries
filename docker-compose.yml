@@ -14,7 +14,7 @@ services:
       POSTGRES_USER: postgres
     # 実行したSQLを標準出力に吐きたい場合
     command: postgres -c log_destination=stderr -c log_statement=all -c log_connections=on -c log_disconnections=on
-  grpc:
+  aries:
     depends_on:
       - aries-db
     container_name: aries

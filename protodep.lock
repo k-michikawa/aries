@@ -1,0 +1,8 @@
+proto_outdir = "./proto"
+
+[[dependencies]]
+  target = "github.com/k-michikawa/leo/product"
+  revision = "a93cbd6e25e23c852ae4e6a5651cd22049d76d72"
+  branch = "main"
+  path = ""
+  protocol = ""

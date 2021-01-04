@@ -8,8 +8,8 @@ mod interfaces;
 mod schema;
 mod use_cases;
 // .protoファイルを.rsで表現したものを読み込んでおく
-pub mod aries {
-    tonic::include_proto!("aries");
+pub mod leo {
+    tonic::include_proto!("leo");
 }
 
 use std::env;
