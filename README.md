@@ -68,7 +68,7 @@ $ ssh-add ~/.ssh/id_rsa
 2. protodep 落としてくる
 3. diesel_cli 落としてくる
 4. `$ protodep up`
-5. `$ docker-compose run -d --service-ports aries-db`
+5. `$ docker-compose up -d aries-db`
 6. `$ diesel migration run`
-7. `$ docker stop /* 4で立ち上げた container name */`
+7. `$ docker stop`
 8. `$ docker-compose up`
